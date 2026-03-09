@@ -11,7 +11,7 @@ import RecipeModal from "../RecipeCardModal/RecipeModal";
 import "./App.css";
 //api.js stuff//
 import { getItems, addItems } from "../../utils/api";
-
+import { fetchMeals } from "../../utils/mealApi";
 function App() {
   //states for the app//
   const [activeModal, setActiveModal] = useState("");
@@ -22,7 +22,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmissionComplete, setIsSubmissionComplete] = useState(false);
 
-  const [searchItem, setSearchItem] = useState("");
+  const [searchItem, setSearchItem] = useState([]);
 
   //functions for the app//
   const closeActiveModal = () => {
@@ -48,8 +48,7 @@ function App() {
     setSelectedCard(card);
   };
 
- 
-
+  
   useEffect(() => {
     getItems()
       .then((items) => {
@@ -65,13 +64,37 @@ function App() {
       );
       setRecipe(filteredRecipes)
   }
-
+  const onSearchType = (query) => {
+      fetchMeals(query)
+        .then((data) => {
+          if (data.meals) {
+            const mealRecipes = data.meals.map(meal => ({
+              _id: meal.idMeal,
+              name: meal.strMeal,
+              imageUrl: meal.strMealThumb,
+              ingredients: Object.keys(meal)
+                .filter(key => key.startsWith('strIngredient') && meal[key])
+                .map(key => meal[key]),
+              instructions: meal.strInstructions,
+              likes: [],
+            }));
+            setRecipe(mealRecipes);
+          } else {
+            setRecipe([]);
+          }
+        })
+        .catch(console.error);
+  }
+          
+          
+        
   return (
     <div className="page">
       <Header />
       <Navbar
         onAddRecipeClick={onAddRecipe}
         onSearch={setSearchItem}
+        onSearchType={onSearchType}
         onSubmit={handleSearchSubmit}
       />
 
